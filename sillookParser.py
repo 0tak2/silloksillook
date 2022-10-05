@@ -23,10 +23,10 @@ def map_collectOnlyMetadata(el) -> str:
         return ""
 
 def parseContent(rawContent) -> str:
-    return ''.join(list(map(map_collectOnlyParagraph, rawContent)))
+    return ''.join(list(map(map_collectOnlyParagraph, rawContent))).strip()
 
 def parseMetadataFromContent(rawContent) -> str:
-    return ''.join(list(map(map_collectOnlyMetadata, rawContent)))
+    return ''.join(list(map(map_collectOnlyMetadata, rawContent))).strip()
 
 def parseAllAndGetEntity(source) -> SillookArticleEntity:
     link = None

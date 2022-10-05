@@ -155,7 +155,7 @@ def showAllDataPanel() -> int:
     globals.setData(db.getAll(cur))
 
     table = Table(show_header=True, header_style="bold magenta")
-    table.add_column("DB ID", overflow="Fold")
+    table.add_column("순번", overflow="Fold")
     table.add_column("기사 ID", overflow="Fold")
     table.add_column("기사 제목", overflow="Fold")
     table.add_column("기사 위치", overflow="Fold")
@@ -175,7 +175,7 @@ def showAllDataPanel() -> int:
     console.print(table)
     return globals.getSizeOfData()
 
-def showDetailDataPanel(id) -> None:
+def showDetailDataPanel(id, direction=1) -> None:
     currentArticle = None
 
     conn, cur = globals.getDB()
@@ -189,11 +189,8 @@ def showDetailDataPanel(id) -> None:
     if currentArticle != None:
         printArticle(currentArticle)
     else:
-        try:
-            showDetailDataPanel(id + 1)
-        except:
-            currentArticle = SillookArticleEntity(id, "", "", "", "", "", "", "")
-            printArticle(currentArticle)
+        currentArticle = SillookArticleEntity(id, "", "", "", "", "", "", "")
+        printArticle(currentArticle)
 
 def printHelp() -> None:
     def makeMenuString(name, key, desc):
@@ -222,8 +219,15 @@ def printArticle(article: SillookArticleEntity, isShort=False, includeNote=True)
         content_han = sliceLetters(content_han, 200)
         metadata = sliceLetters(metadata, 200)
     
-    if not article.isEmpty():
+    if dbID != "None":
         articleInfoStrings.append('\n')
+        articleInfoStrings.append("[blue][b]* 순번[/b][/blue]")
+        articleInfoStrings.append(dbID)
+        articleInfoStrings.append('\n\n')
+    else:
+        articleInfoStrings.append('\n')
+
+    if not article.isEmpty():
         articleInfoStrings.append("[blue][b]* 기사 ID[/b][/blue]")
         articleInfoStrings.append(articleId)
         articleInfoStrings.append('\n\n')
@@ -246,13 +250,16 @@ def printArticle(article: SillookArticleEntity, isShort=False, includeNote=True)
             articleInfoStrings.append('\n\n')
             articleInfoStrings.append("[blue][b]* 메모 사항[/b][/blue]")
             articleInfoStrings.append(note)
-        
-        if dbID != "None":
-            articleInfoStrings.append('\n\n')
-            articleInfoStrings.append("[blue][b]* 내 DB에서의 INDEX[/b][/blue]")
-            articleInfoStrings.append(dbID)
+            articleInfoStrings.append('\n')
     else:
-        articleInfoStrings.append("[b]* 여기에는 어떠한 데이터도 없습니다.[/b]")
+        articleInfoStrings.append("[b]* 불러올 수 있는 데이터가 없습니다.[/b]\n")
+        if dbID != "None":
+            articleInfoStrings.append(f"[b]아직 저장된 데이터가 없거나, {dbID}번 인덱스에 해당하는 데이터가 삭제되었을 수 있습니다.[/b]")
+            articleInfoStrings.append('\n')
+        else:
+            articleInfoStrings.append(f"[b]아직 어떠한 데이터도 저장되지 않은 것일 수 있습니다.[/b]")
+            articleInfoStrings.append('\n')
+
     
     console.print(Panel('  '.join(articleInfoStrings)))
 

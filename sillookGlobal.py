@@ -95,9 +95,9 @@ class SillookGlobal:
         return self.CURRENT_ID
     
     def setCurrentId(self, id):
-        if id > self.getSizeOfData():
+        if id > self.getSizeOfData() + 1:
             self.CURRENT_ID = 1
         elif id < 1:
-            self.CURRENT_ID = self.getSizeOfData()
+            self.CURRENT_ID = self.getSizeOfData() + 1
         else:
             self.CURRENT_ID = id
