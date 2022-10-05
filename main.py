@@ -8,6 +8,7 @@ import urllib3
 from sillookArticleEntity import SillookArticleEntity
 from sillookGlobal import SillookGlobal
 import sillookDatabase as db
+import sillookPandas as sillokpd
 from rich.console import Console
 from rich.columns import Columns
 from rich.panel import Panel
@@ -44,8 +45,7 @@ def enterMenu(cmd: str) -> None:
         console.print('수정')
         input()
     elif cmd == 'E' or cmd == 'e' or cmd == 'ㄷ' or cmd == 'Export':
-        console.print('내보내기')
-        input()
+        exportPrompt()
     elif cmd == 'B' or cmd == 'b' or cmd == 'ㅠ' or cmd == 'Basket':
         changeBasketPrompt()
     elif cmd == 'X' or cmd == 'x' or cmd == 'ㅌ' or cmd == 'Exit':
@@ -61,6 +61,37 @@ def enterMenu(cmd: str) -> None:
         printHelp()
         console.print("\n메인 메뉴로 돌아가려면 엔터를 입력하세요.", style="bold")
         input()
+
+def exportPrompt() -> None:
+    fullLocation = globals.getDbFile()
+    basketName = fullLocation.split('/')[-1].split('.')[0]
+    xlsx_default = "exports/" + basketName + ".xlsx"
+
+    clear()
+    console.print("\n\n====== 엑셀 내보내기 ======\n", style="bold yellow")
+    console.print("아래에 내보낼 파일의 경로와 이름을 입력해주세요.\n")
+    console.print(f"> 내보낼 파일의 경로 입력 <기본값: {xlsx_default}>: ", style="bold yellow")
+    file = input()
+    if file == "":
+        file = xlsx_default
+
+    try:
+        export(file, basketName + " 바구니의 내보내기")
+        console.print("* 내보내기가 완료되었습니다. exports 디렉토리를 확인해보세요.", style="bold blue")
+        console.print("\n메인 메뉴로 돌아가려면 엔터를 입력하세요.", style="bold blue")
+        input()
+    except Exception as e:
+        console.print("!!! 내보내기 중 오류가 발생했습니다.", e, style="bold red")
+        console.print("\n메인 메뉴로 돌아가려면 엔터를 입력하세요.", style="bold red")
+        input()
+
+def export(file, sheetName) -> None:
+    conn, cur = globals.getDB()
+    globals.setData(db.getAll(cur))
+
+    TwoDList = sillokpd.entitiesTo2DList(globals.getData())
+    df = sillokpd.makeDf(TwoDList)
+    sillokpd.dfToExcel(df, file, sheetName)
 
 def toggleViewMode() -> None:
     if globals.getViewMode() == 0:
@@ -121,7 +152,6 @@ def sliceLetters(original: str, letters: int) -> str:
 
 def showAllDataPanel() -> int:
     conn, cur = globals.getDB()
-
     globals.setData(db.getAll(cur))
 
     table = Table(show_header=True, header_style="bold magenta")
@@ -130,18 +160,14 @@ def showAllDataPanel() -> int:
     table.add_column("기사 제목", overflow="Fold")
     table.add_column("기사 위치", overflow="Fold")
     table.add_column("국문 내용", overflow="Fold")
-    table.add_column("원문 내용", overflow="Fold")
-    table.add_column("메타데이터")
     table.add_column("메모", overflow="Fold")
 
     if globals.getSizeOfData() != 0:
         for item in globals.getData():
-            contentKorSummary = sliceLetters(item.getContentKor(), 50)
-            contentHanSummary = sliceLetters(item.getContentHan(), 50)
-            metadataSummary = sliceLetters(item.getMetadata(), 50)
+            contentKorSummary = sliceLetters(item.getContentKor(), 15)
             noteSummary = sliceLetters(item.getNote(), 50)
             table.add_row(
-                str(item.getId()), item.getArticleId(), item.getTitle(), item.getLocation(), contentKorSummary, contentHanSummary, metadataSummary, noteSummary
+                str(item.getId()), item.getArticleId(), item.getTitle(), item.getLocation(), contentKorSummary, noteSummary
             )
     else:
         table.add_row("1", "여기에는", " 아직 ", "저장된", "데이터가", "없습니다.")
