@@ -5,7 +5,7 @@
 아직 개발 중입니다.
 
 # 실행하기
-'''bash
+```bash
 $ python3 -m venv /venv
 
 $ ./venv/Scripts/activate
@@ -13,4 +13,4 @@ $ ./venv/Scripts/activate
 $ pip install -r requirements.txt
 
 $ python3 ./main.py
-'''
+```
