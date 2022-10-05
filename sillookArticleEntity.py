@@ -1,5 +1,6 @@
-class SillokArticleEntity:
-    def __init__(self, articleId: str, title: str, location: str, content_kor: str, content_han: str, metadata: str, note: str):
+class SillookArticleEntity:
+    def __init__(self, id, articleId: str, title: str, location: str, content_kor: str, content_han: str, metadata: str, note: str):
+        self.id = id
         self.articleId = articleId
         self.title = title
         self.location = location
@@ -45,7 +46,10 @@ class SillokArticleEntity:
             return False
         else:
             return True
-    
+
+    def getId(self) -> str:
+        return self.id
+
     def getArticleId(self) -> str:
         return self.articleId
 

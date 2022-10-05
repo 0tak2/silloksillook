@@ -1,7 +1,7 @@
 import re
 import requests
 from bs4 import BeautifulSoup as bs
-from sillokArticleEntity import SillokArticleEntity
+from sillookArticleEntity import SillookArticleEntity
 
 BASE_URL = "https://sillok.history.go.kr/id/"
 
@@ -28,7 +28,7 @@ def parseContent(rawContent) -> str:
 def parseMetadataFromContent(rawContent) -> str:
     return ''.join(list(map(map_collectOnlyMetadata, rawContent)))
 
-def parseAllAndGetEntity(source) -> SillokArticleEntity:
+def parseAllAndGetEntity(source) -> SillookArticleEntity:
     link = None
     articleId = None
     if source.split("/")[0] == "https:":
@@ -58,7 +58,7 @@ def parseAllAndGetEntity(source) -> SillokArticleEntity:
         content_han_parsed = parseContent(content_han)
         metadata_parsed = parseMetadataFromContent(content_kor)
 
-        return SillokArticleEntity(articleId, title_parsed, location_parsed, content_kor_parsed, content_han_parsed, metadata_parsed, "")
+        return SillookArticleEntity(None, articleId, title_parsed, location_parsed, content_kor_parsed, content_han_parsed, metadata_parsed, "")
 
     except Exception as e:
         raise Exception("파싱 중 에러가 발생했습니다.", e)

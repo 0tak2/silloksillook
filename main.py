@@ -3,10 +3,11 @@
 # TODO: 엑셀 익스포트
 
 import os
-import platform
-import sillokParser
+import sillookParser
 import urllib3
-from sillokArticleEntity import SillokArticleEntity
+from sillookArticleEntity import SillookArticleEntity
+from sillookGlobal import SillookGlobal
+import sillookDatabase as db
 from rich.console import Console
 from rich.columns import Columns
 from rich.panel import Panel
@@ -14,40 +15,9 @@ from rich.table import Table
 
 urllib3.disable_warnings()
 
-if platform.system() == "Windows":
-    IS_WINDOWS = True
-else:
-    IS_WINDOWS = False
-
-DATA = []
-
-MENU = [
-    {
-        "name": "뷰 전환",
-        "key": "View",
-        "desc": "데이터를 표로 보여주거나, 자세히 보여주도록 전환합니다."
-    },
-    {
-        "name": "데이터 추가",
-        "key": "Add",
-        "desc": "새로운 항목을 추가합니다."
-    },
-    {
-        "name": "데이터 수정",
-        "key": "Modify",
-        "desc": "기존 항목을 수정하거나 삭제합니다."
-    },
-    {
-        "name": "내보내기",
-        "key": "Export",
-        "desc": "액셀 파일로 바구니 속 내용을 내보냅니다."
-    },
-    {
-        "name": "바구니 변경",
-        "key": "Basket",
-        "desc": "현재 바구니를 바꿉니다."
-    }
-]
+globals = SillookGlobal()
+IS_WINDOWS = globals.getIsWindows()
+MENU = globals.getMenuItems()
 
 console = Console()
 
@@ -66,26 +36,37 @@ def showMenu() -> None:
     console.print(Columns(menu_renderables))
 
 def enterMenu(cmd: str) -> None:
-    if cmd == 'A' or cmd == 'a' or cmd == 'ㅁ' or cmd == 'Add':
+    if cmd == 'V' or cmd == 'v' or cmd == 'ㅍ' or cmd == 'View':
+        toggleViewMode()
+    elif cmd == 'A' or cmd == 'a' or cmd == 'ㅁ' or cmd == 'Add':
         addDataPrompt()
     elif cmd == 'M' or cmd == 'm' or cmd == 'ㅡ' or cmd == 'Modify':
         console.print('수정')
         input()
-    elif cmd == 'D' or cmd == 'd' or cmd == 'ㅇ' or cmd == 'Delete':
-        console.print('삭제')
+    elif cmd == 'E' or cmd == 'e' or cmd == 'ㄷ' or cmd == 'Export':
+        console.print('내보내기')
         input()
     elif cmd == 'B' or cmd == 'b' or cmd == 'ㅠ' or cmd == 'Basket':
-        console.print('변경')
-        input()
+        changeBasketPrompt()
     elif cmd == 'X' or cmd == 'x' or cmd == 'ㅌ' or cmd == 'Exit':
         quit()
     elif cmd == '':
-        pass
+        if globals.getViewMode() == 1:
+                globals.setCurrentId(globals.getCurrentId() + 1)
+    elif cmd == ' ':
+        if globals.getViewMode() == 1:
+                globals.setCurrentId(globals.getCurrentId() - 1)
     else:
         console.print("!!! 잘못된 명령을 입력했습니다.\n아래와 같은 명령을 실행할 수 있습니다.\n", style="bold")
         printHelp()
         console.print("\n메인 메뉴로 돌아가려면 엔터를 입력하세요.", style="bold")
         input()
+
+def toggleViewMode() -> None:
+    if globals.getViewMode() == 0:
+        globals.setViewMode(1)
+    elif globals.getViewMode() == 1:
+        globals.setViewMode(0)
 
 def addDataPrompt() -> None:
     clear()
@@ -94,7 +75,7 @@ def addDataPrompt() -> None:
     src = input()
 
     try:
-        item = sillokParser.parseAllAndGetEntity(src)
+        item = sillookParser.parseAllAndGetEntity(src)
 
         console.print("\n* 다음과 같이 기사를 불러왔습니다.", style="bold yellow")
         printArticle(item, isShort=True, includeNote=False)
@@ -108,8 +89,27 @@ def addDataPrompt() -> None:
         console.print("\n메인 메뉴로 돌아가려면 엔터를 입력하세요.", style="bold red")
         input()
 
-def addData(item: SillokArticleEntity) -> bool:
-    DATA.append(item)
+def addData(item: SillookArticleEntity) -> bool:
+    conn, cur = globals.getDB()
+    newData = db.addArticle(conn, cur, item)
+    globals.setData(newData)
+
+def changeBasketPrompt() -> None:
+    clear()
+    console.print("\n\n====== 바구니 바꾸기 ======\n", style="bold yellow")
+    console.print("아래에 데이터베이스 파일의 이름을 입력해주세요.\n")
+    console.print("db 폴더에 파일을 복사하고, 해당 파일의 이름을 입력하시면 됩니다. (확장자 .db는 제외)")
+    console.print("그런 이름의 파일이 없으면 새로 만듭니다.\n")
+    console.print("> 바구니 이름 입력 <기본값: default>: ", style="bold yellow")
+    dbFile = input()
+    if dbFile == "":
+        dbFile = "default"
+    fullLocation = "db/" + dbFile + '.db'
+    changeBasket(fullLocation)
+
+def changeBasket(dbFile) -> None:
+    globals.setDbFile(dbFile)
+    globals.setConnection()
 
 def sliceLetters(original: str, letters: int) -> str:
     if len(original) >= letters: # 50자 이상
@@ -119,7 +119,11 @@ def sliceLetters(original: str, letters: int) -> str:
     else: # 0자 초과 50자 미만
         return original
 
-def printAllData() -> int:
+def showAllDataPanel() -> int:
+    conn, cur = globals.getDB()
+
+    globals.setData(db.getAll(cur))
+
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("DB ID", overflow="Fold")
     table.add_column("기사 ID", overflow="Fold")
@@ -130,20 +134,40 @@ def printAllData() -> int:
     table.add_column("메타데이터")
     table.add_column("메모", overflow="Fold")
 
-    if len(DATA) != 0:
-        for index, item in enumerate(DATA):
+    if globals.getSizeOfData() != 0:
+        for item in globals.getData():
             contentKorSummary = sliceLetters(item.getContentKor(), 50)
             contentHanSummary = sliceLetters(item.getContentHan(), 50)
             metadataSummary = sliceLetters(item.getMetadata(), 50)
             noteSummary = sliceLetters(item.getNote(), 50)
             table.add_row(
-                str(index), item.getArticleId(), item.getTitle(), item.getLocation(), contentKorSummary, contentHanSummary, metadataSummary, noteSummary
+                str(item.getId()), item.getArticleId(), item.getTitle(), item.getLocation(), contentKorSummary, contentHanSummary, metadataSummary, noteSummary
             )
     else:
-        table.add_row("0", "여기에는", " 아직 ", "저장된", "데이터가", "없습니다.")
+        table.add_row("1", "여기에는", " 아직 ", "저장된", "데이터가", "없습니다.")
 
     console.print(table)
-    return len(DATA)
+    return globals.getSizeOfData()
+
+def showDetailDataPanel(id) -> None:
+    currentArticle = None
+
+    conn, cur = globals.getDB()
+    globals.setData(db.getAll(cur))
+
+    for item in globals.getData():
+        if item.getId() == id:
+            currentArticle = item
+            break
+    
+    if currentArticle != None:
+        printArticle(currentArticle)
+    else:
+        try:
+            showDetailDataPanel(id + 1)
+        except:
+            currentArticle = SillookArticleEntity(id, "", "", "", "", "", "", "")
+            printArticle(currentArticle)
 
 def printHelp() -> None:
     def makeMenuString(name, key, desc):
@@ -152,9 +176,10 @@ def printHelp() -> None:
     menu_renderables = [Panel(makeMenuString(item["name"], item["key"], item["desc"]), expand=True) for item in MENU]
     console.print(Columns(menu_renderables))
 
-def printArticle(article: SillokArticleEntity, isShort=False, includeNote=True) -> None:
+def printArticle(article: SillookArticleEntity, isShort=False, includeNote=True) -> None:
     articleInfoStrings = []
 
+    dbID = str(article.getId())
     articleId = article.getArticleId()
     title = article.getTitle()
     location = article.getLocation()
@@ -192,33 +217,44 @@ def printArticle(article: SillokArticleEntity, isShort=False, includeNote=True) 
         articleInfoStrings.append(metadata)
 
         if includeNote:
-                articleInfoStrings.append('\n\n')
-                articleInfoStrings.append("[blue][b]* 메모 사항[/b][/blue]")
-                articleInfoStrings.append(note)
+            articleInfoStrings.append('\n\n')
+            articleInfoStrings.append("[blue][b]* 메모 사항[/b][/blue]")
+            articleInfoStrings.append(note)
+        
+        if dbID != "None":
+            articleInfoStrings.append('\n\n')
+            articleInfoStrings.append("[blue][b]* 내 DB에서의 INDEX[/b][/blue]")
+            articleInfoStrings.append(dbID)
     else:
-        articleInfoStrings.append("[red][b]* 여기에는 어떠한 데이터도 없습니다.[/b][/red]")
-
+        articleInfoStrings.append("[b]* 여기에는 어떠한 데이터도 없습니다.[/b]")
+    
     console.print(Panel('  '.join(articleInfoStrings)))
+
+def printCurrentBasket() -> None:
+    fullLocation = globals.getDbFile()
+    fileName = fullLocation.split('/')[-1].split('.')[0]
+    console.print(f"\n[ 현재 바구니: {fileName} ({fullLocation}) ]\n", style="bold magenta")
+
 def main() -> None:
+    globals.setConnection()
+
     while True:
         clear()
         showMenu()
 
-        count = printAllData()
-        if count > 0:
+        printCurrentBasket()
+
+        if globals.getViewMode() == 0:
+            count = showAllDataPanel()
+            if count > 0:
+                showMenu()
+        elif globals.getViewMode() == 1:
+            showDetailDataPanel(globals.getCurrentId())
+            console.print("\n! 다음 아이템을 보려면 엔터를 누르세요")
+            console.print("! 이전 아이템을 보려면 스페이스바를 누르고, 엔터를 누르세요\n")
             showMenu()
 
         enterMenu(input("> "))
 
-    console.print("실록 기사 링크 혹은 기사 아이디 입력:")
-    link = input() # ex> https://sillok.history.go.kr/id/kca_11004023_003
-
-    try:
-        test = sillokParser.parseAllAndGetEntity(link)
-    except Exception as e:
-        console.print("!!! 파싱 중 오류가 발생했습니다. 링크나 아이디가 잘못 되었을 수 있습니다.", e, style="bold red")
-        test = SillokArticleEntity("", "", "", "", "", "")
-    
-    printAll(test)
-
-main()
+if __name__ == '__main__':
+    main()
