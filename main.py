@@ -5,6 +5,7 @@
 import os
 import sillookParser
 import urllib3
+from datetime import datetime
 from sillookArticleEntity import SillookArticleEntity
 from sillookGlobal import SillookGlobal
 import sillookDatabase as db
@@ -65,7 +66,11 @@ def enterMenu(cmd: str) -> None:
 def exportPrompt() -> None:
     fullLocation = globals.getDbFile()
     basketName = fullLocation.split('/')[-1].split('.')[0]
-    xlsx_default = "exports/" + basketName + ".xlsx"
+
+    dt = datetime.now()
+    timestr = dt.strftime("%Y%m%d-%H%M%S.%f")
+    timestr_for_sheet = dt.strftime("%Y%m%d")
+    xlsx_default = f"exports/{basketName}_{timestr}.xlsx"
 
     clear()
     console.print("\n\n====== 엑셀 내보내기 ======\n", style="bold yellow")
@@ -76,7 +81,7 @@ def exportPrompt() -> None:
         file = xlsx_default
 
     try:
-        export(file, basketName + " 바구니의 내보내기")
+        export(file, f"{basketName} ({timestr_for_sheet})")
         console.print("* 내보내기가 완료되었습니다. exports 디렉토리를 확인해보세요.", style="bold blue")
         console.print("\n메인 메뉴로 돌아가려면 엔터를 입력하세요.", style="bold blue")
         input()

@@ -5,9 +5,12 @@ from sillookArticleEntity import SillookArticleEntity
 
 BASE_URL = "https://sillok.history.go.kr/id/"
 
+def makeUrlFromArticleId(articleId) -> str:
+    return BASE_URL + articleId
+
 def toPureText(rawHtml) -> str:
-    pureText = re.sub('<.+?>', '', str(rawHtml), 0).strip()
-    pureText = pureText.replace("[", "").replace("]", "").replace("\n", "").replace("\t", "")
+    pureText = re.sub('<.+?>', '', str(rawHtml), 0)
+    pureText = pureText.replace("[", "").replace("]", "").replace("\r\n", "").replace("\t", "").replace("  ", "").strip()
     return pureText
 
 def map_collectOnlyParagraph(el) -> str:
@@ -40,7 +43,6 @@ def parseAllAndGetEntity(source) -> SillookArticleEntity:
         link = BASE_URL + source
         articleId = source
 
-
     try:
         rawPage = requests.get(link, verify=False)
         soup = bs(rawPage.text, "html.parser")
@@ -49,7 +51,7 @@ def parseAllAndGetEntity(source) -> SillookArticleEntity:
         title_parsed = toPureText(title)
 
         location = soup.select('span.tit_loc')
-        location_parsed = toPureText(location).replace("기사", "기사 ")
+        location_parsed = toPureText(location).replace(', ', "\n").replace('기사', '기사\n')
 
         content_raw = soup.select('div.ins_view_pd')
         content_kor = content_raw[0]

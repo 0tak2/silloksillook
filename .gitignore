@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 __pycache__/
+
+db/default.db
