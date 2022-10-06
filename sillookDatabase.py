@@ -92,7 +92,7 @@ def updateValue(conn, cursor, id, column, newValue) -> int:
         return -1
     
     try:
-        sql = f'UPDATE articles SET {column} = "{newValue}" WHERE id={str(id)}'
+        sql = f"UPDATE articles SET {column} = '{newValue}' WHERE id={str(id)}"
         cursor.execute(sql)
         conn.commit()
     except Exception as e:

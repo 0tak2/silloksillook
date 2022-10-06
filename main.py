@@ -92,15 +92,27 @@ def modifyPrompt() -> None:
             modify(index, 'note')
             break
         elif col == 'T' or col == 't' or col == 'ㅅ':
+            console.print(f"> 원본 데이터로부터 내용을 수정하려고 하고 있습니다.\n 의도한 것인지 다시 한 번 확인해보십시오.", style="bold red")
+            console.print(f"> 계속 수정하려면 엔터를 누르세요.", style="bold red")
+            input()
             modify(index, 'title')
             break
         elif col == 'L' or col == 'l' or col == 'ㅣ':
+            console.print(f"> 원본 데이터로부터 내용을 수정하려고 하고 있습니다.\n 의도한 것인지 다시 한 번 확인해보십시오.", style="bold red")
+            console.print(f"> 계속 수정하려면 엔터를 누르세요.", style="bold red")
+            input()
             modify(index, 'location')
             break
         elif col == 'K' or col == 'k' or col == 'ㅏ':
+            console.print(f"> 원본 데이터로부터 내용을 수정하려고 하고 있습니다.\n 의도한 것인지 다시 한 번 확인해보십시오.", style="bold red")
+            console.print(f"> 계속 수정하려면 엔터를 누르세요.", style="bold red")
+            input()
             modify(index, 'content_kor')
             break
         elif col == 'H' or col == 'h' or col == 'ㅗ':
+            console.print(f"> 원본 데이터로부터 내용을 수정하려고 하고 있습니다.\n 의도한 것인지 다시 한 번 확인해보십시오.", style="bold red")
+            console.print(f"> 계속 수정하려면 엔터를 누르세요.", style="bold red")
+            input()
             modify(index, 'content_han')
             break
         elif col == 'X' or col == 'x' or col == 'ㅌ':
@@ -110,7 +122,7 @@ def modifyPrompt() -> None:
                 delete(index)
                 break
         else:
-            console.print("!!! 잘못된 명령을 입력했습니다.\n아래와 같이 입력해주세요.", style="bold")
+            console.print("\n!!! 잘못된 명령을 입력했습니다.\n아래와 같이 입력해주세요.", style="bold")
             console.print("메모=M, 제목=T, 위치=L, 국문내용=K, 원문내용=H", style="bold")
 
 def delete(index) -> None: 
@@ -152,7 +164,7 @@ def modify(index, col) -> None:
     if IS_WINDOWS: # 에디터를 call
         subprocess.call(f"notepad.exe {tmpFileName}")
     else:
-        subprocess.call(f"nano {tmpFileName}")
+        subprocess.call(f"vim {tmpFileName}", shell=True)
     
     # 작성된 텍스트 파일의 내용을 불러옴
     newContent = ""
