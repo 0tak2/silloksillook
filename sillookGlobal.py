@@ -1,4 +1,7 @@
 import platform
+import json
+import shutil
+import atexit
 from sillookArticleEntity import SillookArticleEntity
 import sillookDatabase as db
 
@@ -47,7 +50,47 @@ class SillookGlobal:
         self.VIEW_MODE = 0 # 0 = table, 1 = detail
 
         self.CURRENT_ID = 1
-    
+
+        try:
+            self.loadPreferencesFromJsonFile()
+        except FileNotFoundError:
+            shutil.copyfile('preferences.json.origin', 'preferences.json')
+            self.loadPreferencesFromJsonFile()
+
+        atexit.register(self.handleExit)
+
+    def handleExit(self):
+        self.savePreferencesJsonFile()
+
+    def loadPreferencesFromJsonFile(self):
+        preferences_json = open('preferences.json', encoding = 'utf-8')
+        preferences_dict = json.load(preferences_json)
+        self.PREFERENCES = preferences_dict
+
+        self.afterLoadPreference()
+
+    def afterLoadPreference(self):
+        dbFile = self.getPreferences()['lastUsedDB']
+
+        fullLocation = ""
+        if ('/' in dbFile) or ('\\' in dbFile): # 전체 경로를 직접 입력했을 경우에는 입력값 자체를 쓴다
+            fullLocation = dbFile
+        else:
+            fullLocation = "db/" + dbFile + '.db'
+
+        self.setDbFile(fullLocation)
+
+    def getPreferences(self):
+        return self.PREFERENCES
+
+    def updatePreferences(self, dict):
+        self.PREFERENCES.update(dict)
+        return self.PREFERENCES
+
+    def savePreferencesJsonFile(self):
+        with open('preferences.json', 'w') as outfile:
+            json.dump(self.PREFERENCES, outfile, indent=4)
+
     def getData(self):
         return self.LOADED_DATA
     

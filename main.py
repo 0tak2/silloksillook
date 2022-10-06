@@ -261,17 +261,29 @@ def addData(item: SillookArticleEntity) -> bool:
     globals.setData(newData)
 
 def changeBasketPrompt() -> None:
+    default = globals.getPreferences()['lastUsedDB']
+
     clear()
     console.print("\n\n====== 바구니 바꾸기 ======\n", style="bold yellow")
     console.print("아래에 데이터베이스 파일의 이름을 입력해주세요.\n")
     console.print("db 폴더에 파일을 복사하고, 해당 파일의 이름을 입력하시면 됩니다. (확장자 .db는 제외)")
     console.print("그런 이름의 파일이 없으면 새로 만듭니다.\n")
-    console.print("> 바구니 이름 입력 <기본값: default>: ", style="bold yellow")
+    console.print(f"> 바구니 이름 입력 <기본값: {default}>: ", style="bold yellow")
+
     dbFile = input()
+
     if dbFile == "":
-        dbFile = "default"
-    fullLocation = "db/" + dbFile + '.db'
+        dbFile = default
+
+    if ('/' in dbFile) or ('\\' in dbFile): # 전체 경로를 직접 입력했을 경우에는 입력값 자체를 쓴다
+        fullLocation = dbFile
+    else:
+        fullLocation = "db/" + dbFile + '.db'
     changeBasket(fullLocation)
+
+    globals.updatePreferences({
+        "lastUsedDB": fullLocation
+    })
 
 def changeBasket(dbFile) -> None:
     globals.setDbFile(dbFile)
