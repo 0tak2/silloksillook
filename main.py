@@ -195,7 +195,11 @@ def modify(index, col) -> None:
 
 def exportPrompt() -> None:
     fullLocation = globals.getDbFile()
-    basketName = fullLocation.split('/')[-1].split('.')[0]
+
+    if IS_WINDOWS:
+        basketName = fullLocation.split('\\')[-1].split('.')[0]
+    else:
+        basketName = fullLocation.split('/')[-1].split('.')[0]
 
     dt = datetime.now()
     timestr = dt.strftime("%Y%m%d-%H%M%S.%f")
@@ -412,7 +416,12 @@ def printArticle(article: SillookArticleEntity, isShort=False, includeNote=True)
 
 def printCurrentBasket() -> None:
     fullLocation = globals.getDbFile()
-    fileName = fullLocation.split('/')[-1].split('.')[0]
+    
+    if IS_WINDOWS:
+        fileName = fullLocation.split('\\')[-1].split('.')[0]
+    else:
+        fileName = fullLocation.split('/')[-1].split('.')[0]
+
     console.print(f"\n[ 현재 바구니: {fileName} ({fullLocation}) ]\n", style="bold magenta")
 
 def main() -> None:
